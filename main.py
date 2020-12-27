@@ -9,7 +9,7 @@ from signal import pause
 import time
 
 ROW_PER_PAGE = 7
-DISP_OFF_SEC = 5
+DISP_OFF_SEC = 3
 
 # Buttons pin number (BOARD)
 # BUTTON_UP      = 37
@@ -28,8 +28,6 @@ display_manager = None
 button_manager = None
 running_script = None
 running_thread = None
-is_display_off = False
-display_off_timer = None
 
 def setup_directory_manager():
   cwd_path = Path.cwd()
@@ -39,7 +37,7 @@ def setup_directory_manager():
 
 def setup_display_manager():
   global display_manager
-  display_manager = Display_Manager()
+  display_manager = Display_Manager(sleep=DISP_OFF_SEC)
 
 def setup_buttons():
   global button_manager
@@ -49,19 +47,17 @@ def setup_buttons():
     global running_script
     global running_thread
     if running_script is not None and running_thread is not None:
-      return True
+      return running_script.poll() is None
     else:
       return False
 
   def btn_up_callback(channel):
-    global is_display_off
-    if is_display_off is True:
-      is_display_off = False
+    if display_manager.is_sleeping():
+      display_manager.wake_up()
       display_updated_menu()
-      restart_display_off_timer()
       return
-
-    restart_display_off_timer()
+    else:
+      display_manager.reset_sleep_timer()
 
     # no-op when scripts is running
     if is_script_running() is True:
@@ -70,12 +66,26 @@ def setup_buttons():
     display_updated_menu()
 
   def btn_down_callback(channel):
+    if display_manager.is_sleeping():
+      display_manager.wake_up()
+      display_updated_menu()
+      return
+    else:
+      display_manager.reset_sleep_timer()
+
     if is_script_running() is True:
       return
     directory_manager.highlight_next_file()
     display_updated_menu()
 
   def btn_confirm_callback(channel):
+    if display_manager.is_sleeping():
+      display_manager.wake_up()
+      display_updated_menu()
+      return
+    else:
+      display_manager.reset_sleep_timer()
+
     if is_script_running() is True:
       return
     if directory_manager.is_highlighted_path_directory():
@@ -88,6 +98,13 @@ def setup_buttons():
       execute_script(script_path, current_path)
   
   def btn_cancel_callback(channel):
+    if display_manager.is_sleeping():
+      display_manager.wake_up()
+      display_updated_menu()
+      return
+    else:
+      display_manager.reset_sleep_timer()
+
     global running_script
     global running_thread
     if is_script_running() is True:
@@ -98,9 +115,14 @@ def setup_buttons():
       running_script = None
       running_thread = None
       display_updated_menu()
-    else: 
-      directory_manager.go_out_from_folder()
-      display_updated_menu()
+    else:
+      if running_script is not None and running_thread is not None:
+        running_script = None
+        running_thread = None
+        display_updated_menu()
+      else:
+        directory_manager.go_out_from_folder()
+        display_updated_menu()
   
   button_manager.setup(BUTTON_UP,      btn_up_callback)
   button_manager.setup(BUTTON_DOWN,    btn_down_callback)
@@ -130,7 +152,8 @@ def execute_script(script_path, working_path):
       output_lines.append(output_buf)
       if len(output_lines) > 6:
         output_lines.pop(0)
-      display_fnc(script_name, output_lines)
+      if not display_manager.is_sleeping():
+        display_fnc(script_name, output_lines)
 
   script_thread = Thread(target=print_script_output_to_display, args=(running_script, display_manager.draw_script_output, script_path.name), daemon=True)
   script_thread.start()
@@ -138,35 +161,12 @@ def execute_script(script_path, working_path):
   global running_thread
   running_thread = script_thread
 
-def start_display_off_timer():
-  def off_disp_callback():
-    print("off display")
-    display_manager.off_display()
-    global is_display_off
-    is_display_off = True
-  
-  global display_off_timer
-  display_off_timer = Timer(DISP_OFF_SEC, off_disp_callback)
-  display_off_timer.start()
-
-def cancel_display_off_timer():
-  display_off_timer.cancel()
-
-def restart_display_off_timer():
-  cancel_display_off_timer()
-  start_display_off_timer()
-
 # ==================================================================
 # Test LED
 def test_led():
   from gpiozero import PWMLED, Button
 
   led = PWMLED("GPIO5")
-  # led.blink(on_time=0.1, off_time=0.1, fade_in_time=0.1, fade_out_time=0.7)
-
-  # def blink_fast():
-  #   led.blink(on_time=0.1, off_time=0.1, fade_in_time=0.1, fade_out_time=0.7)
-
   led.pulse = lambda: led.blink(on_time=0.1, off_time=0.1, fade_in_time=0.1, fade_out_time=0.7)
   led.pulse()
 
@@ -182,8 +182,6 @@ def main():
     # display initial menus
     display_updated_menu()
     # test_led()
-
-    start_display_off_timer()
 
     pause()
   except KeyboardInterrupt:

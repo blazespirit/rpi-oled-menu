@@ -1,10 +1,11 @@
 import Adafruit_SSD1306
-import RPi.GPIO as GPIO
 import Adafruit_GPIO
 
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
+
+from threading import Timer
 
 # Raspberry Pi pin configuration:
 RST = 24
@@ -21,11 +22,15 @@ FONT_LARGE = ImageFont.truetype('./font/slkscr.ttf', 16)
 LINE_HEIGHT = 9
 
 class Display_Manager:
-  def __init__(self, gpio_mode=GPIO.BCM):
-    self.disp = Adafruit_SSD1306.SSD1306_128_64(rst=RST, gpio=Adafruit_GPIO.RPiGPIOAdapter(GPIO, mode=gpio_mode))
+  def __init__(self, sleep=None):
+    self.disp = Adafruit_SSD1306.SSD1306_128_64(rst=RST)
     self.disp.begin()
     self.disp.clear()
     self.disp.display()
+    self.sleep_sec = sleep
+    self.sleep_timer = None
+    self.is_sleep = False
+    self.start_sleep_timer()
 
   # draw menu list with highlighted item
   def draw_menu(self, menu, highlighted_file):
@@ -107,5 +112,26 @@ class Display_Manager:
 
   def off_display(self):
     # it's just clear the display actually
-    self.disp.clear()
-    self.disp.display()
+    self.clear_display()
+
+  def sleep(self):
+    self.is_sleep = True
+    self.off_display()
+
+  def wake_up(self):
+    self.is_sleep = False
+    if self.sleep_sec is not None:
+      self.start_sleep_timer()
+
+  def start_sleep_timer(self):
+    if self.sleep_sec is not None:
+      self.sleep_timer = Timer(self.sleep_sec, self.sleep)
+      self.sleep_timer.start()
+
+  def reset_sleep_timer(self):
+    if self.sleep_sec is not None:
+      self.sleep_timer.cancel()
+      self.start_sleep_timer()
+
+  def is_sleeping(self):
+    return self.is_sleep

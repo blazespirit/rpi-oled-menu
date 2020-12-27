@@ -11,7 +11,7 @@ def signal_handler(signal_received, frame):
 def main():
   signal(SIGTERM, signal_handler)
   try:
-    for x in range(50):
+    for x in range(5):
       global exit_flag
       if exit_flag:
         print('Exiting...')
