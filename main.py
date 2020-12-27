@@ -1,6 +1,7 @@
 from Directory_Manager import Directory_Manager
 from Display_Manager import Display_Manager
-from Button_Manager import Button_Manager # TODO - maybe group these manager into Utils
+from Button_Manager import Button_Manager
+from LED_Manager import LED_Manager # TODO - maybe group these manager into Utils
 
 from pathlib import Path
 from subprocess import Popen, PIPE
@@ -23,9 +24,13 @@ BUTTON_DOWN    = 19
 BUTTON_CANCEL  = 13
 BUTTON_CONFIRM = 6
 
+# Red LED pin number (BCM)
+RED_LED = 5
+
 directory_manager = None
 display_manager = None
 button_manager = None
+led = None
 running_script = None
 running_thread = None
 
@@ -129,6 +134,11 @@ def setup_buttons():
   button_manager.setup(BUTTON_CONFIRM, btn_confirm_callback)
   button_manager.setup(BUTTON_CANCEL,  btn_cancel_callback)
 
+def setup_led():
+  global led
+  led_manager = LED_Manager()
+  led = led_manager.setup(RED_LED)
+
 def display_updated_menu():
   menus = directory_manager.get_menus()
   highlighted_file = directory_manager.get_highlighted_path()
@@ -154,40 +164,27 @@ def execute_script(script_path, working_path):
         output_lines.pop(0)
       if not display_manager.is_sleeping():
         display_fnc(script_name, output_lines)
+    led.off()
 
   script_thread = Thread(target=print_script_output_to_display, args=(running_script, display_manager.draw_script_output, script_path.name), daemon=True)
   script_thread.start()
 
   global running_thread
   running_thread = script_thread
-
-# ==================================================================
-# Test LED
-def test_led():
-  from gpiozero import PWMLED, Button
-
-  led = PWMLED("GPIO5")
-  led.pulse = lambda: led.blink(on_time=0.1, off_time=0.1, fade_in_time=0.1, fade_out_time=0.7)
   led.pulse()
-
-
-# ==================================================================
 
 def main():
   try:
     setup_directory_manager()
     setup_display_manager()
     setup_buttons()
+    setup_led()
     
     # display initial menus
     display_updated_menu()
-    # test_led()
 
     pause()
   except KeyboardInterrupt:
     display_manager.off_display()
 
 main()
-
-
-# TODO - off display after some timeout
