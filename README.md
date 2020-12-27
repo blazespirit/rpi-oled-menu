@@ -18,7 +18,7 @@ sudo apt install -y python3-pil
 sudo apt install -y python3-pip
 sudo apt install -y python3-setuptools
 sudo apt install -y python3-rpi.gpio
-sudo apt install python3-gpiozero
+sudo apt install -y python3-gpiozero
 ```
 more info: https://www.raspberrypi-spy.co.uk/2018/04/i2c-oled-display-module-with-raspberry-pi/
 
