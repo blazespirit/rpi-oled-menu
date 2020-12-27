@@ -28,7 +28,9 @@ sudo raspi-config
 ```
 additional info: https://www.raspberrypi-spy.co.uk/2014/11/enabling-the-i2c-interface-on-the-raspberry-pi/
 
-4. There is a script to read temperature from 4 DS18B20 sensors, so you will need to enable the 1-wire protocal
+4. Increase I2C bus speed for better OLED performance: https://www.raspberrypi-spy.co.uk/2018/02/change-raspberry-pi-i2c-bus-speed/
+
+5. [Optional] There is a script to read temperature from 4 DS18B20 sensors, so you will need to enable the 1-wire protocal
 ```
 dtoverlay=w1-gpio
 ```
