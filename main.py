@@ -27,6 +27,7 @@ BUTTON_CONFIRM = 6
 # Red LED pin number (BCM)
 RED_LED = 5
 
+# Global variables
 directory_manager = None
 display_manager = None
 button_manager = None

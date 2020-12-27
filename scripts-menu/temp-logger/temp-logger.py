@@ -7,7 +7,7 @@ DS18B20_3_ID = '28-3c01b5562d72'
 # Sensor read interval in seconds
 READ_INTERVAL_SEC = 1
 
-from signal import signal, SIGINT
+from signal import signal, SIGINT, SIGTERM
 from sys import exit
 from datetime import datetime
 import time
@@ -41,6 +41,7 @@ def raw_str_to_temp(raw_str):
 print('temp-logger started')
 
 signal(SIGINT, signal_handler)
+signal(SIGTERM, signal_handler)
 
 now = datetime.now()
 date_time = now.strftime("%Y-%m-%d_%H-%M-%S")
