@@ -9,7 +9,7 @@ from signal import pause
 import time
 
 ROW_PER_PAGE = 7
-DISP_OFF_SEC = 3
+DISP_OFF_SEC = 30
 
 # Buttons pin number (BOARD)
 # BUTTON_UP      = 37
