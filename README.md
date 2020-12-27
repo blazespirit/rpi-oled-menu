@@ -12,9 +12,15 @@ python --version
 
 2. Install necessary packages
 ```
-sudo python -m pip install --upgrade pip setuptools wheel
-sudo pip install Adafruit-SSD1306
+sudo apt install -y python3-dev
+sudo apt install -y python-smbus i2c-tools
+sudo apt install -y python3-pil
+sudo apt install -y python3-pip
+sudo apt install -y python3-setuptools
+sudo apt install -y python3-rpi.gpio
+sudo apt install python3-gpiozero
 ```
+more info: https://www.raspberrypi-spy.co.uk/2018/04/i2c-oled-display-module-with-raspberry-pi/
 
 3. Enable I2C interface
 ```
